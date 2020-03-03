@@ -53,7 +53,6 @@ void setup()
   Wire.begin();
   mpu.initialize();
   bluetooth.begin(9600);
-  Serial.begin(115200);
 
   pinMode(INTERRUPT_PIN, INPUT);
   pinMode(MOTOR_1_PIN, OUTPUT);
@@ -69,16 +68,6 @@ void setup()
   rollPID.SetOutputLimits(-30, 30);
   yawPID.SetMode(AUTOMATIC);
   yawPID.SetOutputLimits(-30, 30);
-
-  if (!mpu.testConnection())
-  {
-    Serial.println("START: MPU connection failure!");
-  }
-
-  if (mpu.dmpInitialize() != 0)
-  {
-    Serial.println("START: Initialize failure!");
-  }
 
   mpu.setXAccelOffset(-696);
   mpu.setYAccelOffset(-1670);
@@ -129,41 +118,34 @@ void processMPUInterruption()
 
 void sendLog()
 {
-  String yprStr = "$_0";
-  yprStr += yawIn;
-  yprStr += ";";
-  yprStr += pitchIn;
-  yprStr += ";";
-  yprStr += rollIn;
-
-  Serial.println(yprStr);
-
-  String outputStr = "$_1";
-  outputStr += yawOut;
-  outputStr += ";";
-  outputStr += pitchOut;
-  outputStr += ";";
-  outputStr += rollOut;
-
-  Serial.println(outputStr);
-
-  String setStr = "$_2";
-  setStr += yawSet;
-  setStr += ";";
-  setStr += pitchSet;
-  setStr += ";";
-  setStr += rollSet;
-
-  Serial.println(setStr);
-
-  String speedStr = "$_3";
-  for (size_t i = 0; i <= sizeof(speed); i++)
-  {
-    speedStr += speed[i];
-    speedStr += ";";
-  }
-
-  Serial.println(speedStr);
+  String jsonStr = "$[[";
+  jsonStr += yawIn;
+  jsonStr += ",";
+  jsonStr += pitchIn;
+  jsonStr += ",";
+  jsonStr += rollIn;
+  jsonStr += "],[";
+  jsonStr += yawOut;
+  jsonStr += ",";
+  jsonStr += pitchOut;
+  jsonStr += ",";
+  jsonStr += rollOut;
+  jsonStr += "],[";
+  jsonStr += yawSet;
+  jsonStr += ",";
+  jsonStr += pitchSet;
+  jsonStr += ",";
+  jsonStr += rollSet;
+  jsonStr += "],[";
+  jsonStr += speed[MOTOR_1_SPD];
+  jsonStr += ",";
+  jsonStr += speed[MOTOR_2_SPD];
+  jsonStr += ",";
+  jsonStr += speed[MOTOR_3_SPD];
+  jsonStr += ",";
+  jsonStr += speed[MOTOR_4_SPD];
+  jsonStr += "]]";
+  bluetooth.println(jsonStr);
 }
 
 void readCommand()
